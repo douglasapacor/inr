@@ -13,8 +13,17 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
-  Typography
+  Theme,
+  Typography,
+  useMediaQuery
 } from "@mui/material"
+import {
+  DesktopDatePicker,
+  LocalizationProvider,
+  MobileDatePicker
+} from "@mui/x-date-pickers"
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns"
+import ptBR from "date-fns/locale/pt-BR"
 import { useRouter } from "next/router"
 import { ChangeEvent, useEffect, useState } from "react"
 
@@ -110,8 +119,11 @@ type resumoList = {
 
 export default function NovaPublicacao() {
   const router = useRouter()
+  const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"))
   const [loading, setLoading] = useState<boolean>(false)
   const [blockLink, setBlockLink] = useState<boolean>(false)
+  const [blockAcumuladoData, setBlockAcumuladoData] = useState<boolean>(false)
+  const [dataAcumulado, setDataAcumulado] = useState<Date | null>(null)
 
   const [titulo, setTitulo] = useState<string>("")
   const [tipoBoletim] = useState<boletimType[]>([
@@ -550,11 +562,18 @@ export default function NovaPublicacao() {
                     onChange={(e: SelectChangeEvent<string>) => {
                       const valueSelected = e.target.value.toString()
 
+                      if (valueSelected === "SP-ACU") {
+                        setBlockAcumuladoData(true)
+                      } else {
+                        setBlockAcumuladoData(false)
+                      }
+
                       if (
                         valueSelected === "" ||
                         valueSelected === "SP" ||
                         valueSelected === "PR" ||
-                        valueSelected === "RS"
+                        valueSelected === "RS" ||
+                        valueSelected === "SP-ACU"
                       ) {
                         setBlockLink(false)
                       } else {
@@ -575,6 +594,7 @@ export default function NovaPublicacao() {
                     <MenuItem value={"SP-NHA"}>
                       SP - Não há atos de interesse...
                     </MenuItem>
+                    <MenuItem value={"SP-ACU"}>SP - Acumulado</MenuItem>
                     <MenuItem value={"PR"}>PR</MenuItem>
                     <MenuItem value={"PR-NHP"}>
                       PR - Não houve publicação...
@@ -592,6 +612,39 @@ export default function NovaPublicacao() {
                   </Select>
                 </FormControl>
               </Grid>
+              {/* start */}
+              <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
+                <LocalizationProvider
+                  dateAdapter={AdapterDateFns}
+                  locale={ptBR}
+                >
+                  {isMobile ? (
+                    <MobileDatePicker
+                      label="Data do Acumulado*"
+                      value={dataAcumulado}
+                      onChange={(newValue: any) => {
+                        setDataAcumulado(newValue)
+                      }}
+                      renderInput={(params: any) => (
+                        <TextField {...params} fullWidth />
+                      )}
+                    />
+                  ) : (
+                    <DesktopDatePicker
+                      label="Data do Acumulado*"
+                      value={dataAcumulado}
+                      minDate={new Date("2010-01-01")}
+                      onChange={(newValue: any) => {
+                        setDataAcumulado(newValue)
+                      }}
+                      renderInput={(params: any) => (
+                        <TextField {...params} fullWidth />
+                      )}
+                    />
+                  )}
+                </LocalizationProvider>
+              </Grid>
+              {/* end */}
               <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
                 <TextField
                   disabled={loading || blockLink ? true : false}
